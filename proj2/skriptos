@@ -1,0 +1,44 @@
+#!/bin/bash
+
+
+immigrants=(1 5 15)
+wait=(0 420 2000)
+
+if ! chmod +x doe 2> /dev/null;then
+	echo -e "\nnemas soubor 'doe', stahni v pinu uplne dole\n"
+	exit 1
+fi
+
+for a in "${immigrants[@]}"
+do
+	for b in "${wait[@]}"
+	do
+		for c in "${wait[@]}"
+		do
+			for d in "${wait[@]}"
+			do
+				for e in "${wait[@]}"
+				do
+					if timeout 300 ./proj2 $a $b $c $d $e; then
+						if ps aux | grep -E ""$(whoami)"\./proj2( +[0-9]+){5}" > /dev/null ;then
+							echo "Nejsou ukonceny vsechny child procesy"
+							exit 1
+						fi						
+						if cat proj2.out | ./doe | grep -Eq "Alles gute";then
+							:
+						else
+							echo "Failed with arguments" $a $b $c $d $e
+							echo "For detailed error message run:" 
+							echo "cat proj2.out | ./doe"
+							exit 1
+						fi
+					else
+						echo "Probably deadlocked, program couldnt finish within 300 seconds with arguments" $a $b $c $d $e
+					fi
+				done
+			done
+		done
+	done	
+done
+
+echo "All passed"
