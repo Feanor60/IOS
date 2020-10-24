@@ -1,0 +1,270 @@
+#!/bin/sh
+export POSIXLY_CORRECT=yes
+
+NORM=0
+
+while getopts 'i:n' OPTION; do #parse first two arguments
+	case "$OPTION" in
+	i)
+	 FILE_ERE=$OPTARG
+	 ;;
+	n)
+	 NORM=1
+	 echo "normalizce je nastavena"
+	 ;;
+	?)
+	 echo "script usage $(basename "$0") [-i FILE_ERE] [-n] [DIR]" >&2
+	 exit 1
+	 ;;
+  esac
+done
+shift $(($OPTIND -1)) #shift
+
+
+DIR=$1
+DIR=$(readlink -f "$DIR")
+
+if [ -z "$DIR" ]
+then
+	DIR=$PWD
+else
+	PWD=$DIR
+fi
+
+
+if [ "$FILE_ERE" = "$PWD" ]
+then
+	echo "error FILE_ERE cannot be the root directory"
+	exit 1
+fi
+
+
+if [ -d "$PWD" ]
+then
+	DIR_NUM=0
+else
+	echo "not a directory"
+fi
+
+if [ ! -t 1 ]; then
+	echo "not a terminal"
+	exit 1
+fi
+
+
+
+
+DIR_NUM=$(find "$DIR" -mindepth 1 -type d -name "$FILE_ERE" -prune -o -type d -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+DIR_NUM=$(echo "$DIR_NUM"|wc -l)
+
+
+
+FILE_NUM=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+FILE_NUM=$(echo "$FILE_NUM"|wc -l)
+
+
+#searching files in DIR based on their size
+
+first=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size -100c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$first" = "" ]
+then
+	first=0
+else
+	first=$(echo "$first"|wc -l)
+fi
+
+
+
+second=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +99c -size -1024c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$second" = "" ]
+then
+	second=0
+else
+	second=$(echo "$second"|wc -l)
+fi
+
+
+third=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +1023c -size -10240c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$third" = "" ]
+then
+	third=0
+else
+	third=$(echo "$third"|wc -l)
+fi
+
+fourth=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +10239c -size -102400c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$fourth" = "" ]
+then
+	fourth=0
+else
+	fourth=$(echo "$fourth"|wc -l)
+fi
+
+
+fifth=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +102399c -size -131072c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$fifth" = "" ]
+then
+	fifth=0
+else
+	fifth=$(echo "$fifth"|wc -l)
+fi
+
+sixth=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +131071c -size -1310720c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$sixth" = "" ]
+then
+	sixth=0
+else
+	sixth=$(echo "$sixth"|wc -l)
+fi
+
+
+seventh=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +1310719c -size -13107200c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$seventh" = "" ]
+then
+	seventh=0
+else
+	seventh=$(echo "$seventh"|wc -l)
+fi
+
+
+eight=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +13107199c -size -134217728c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$eight" = "" ]
+then
+	eight=0
+else
+	eight=$(echo "$eight"|wc -l)
+fi
+
+
+ninth=$(find "$DIR" -type d -name "$FILE_ERE" -prune -o -type f -size +134217727c -print)
+return=$?
+if [ "$return" != 0 ]
+then
+	exit 1
+fi
+
+if [ "$ninth" = "" ]
+then
+	ninth=0
+else
+	ninth=$(echo "$ninth"|wc -l)
+fi
+
+
+echo "Root directory: $PWD"
+
+echo "Directories: $DIR_NUM"	
+
+echo "Files: $FILE_NUM"
+
+
+
+printf_new() {
+ num=$1
+ i=0
+ if [ "$NORM" = 1 ];then
+ 	cols=$(tput cols)
+ 	cols=$((cols-13))
+ 	while [ "$i" -lt "$num" ] && [ "$i" -le "$cols" ]
+ 	do
+		printf "%s" "#"
+		i=$((i+1))
+ 	done
+else
+	while [ "$i" -lt "$num" ]
+ 	do
+		printf "%s" "#"
+		i=$((i+1))
+	done
+ fi
+}
+
+
+echo "File size histogram: "
+printf '  <100 B  : ' 
+printf_new "$first"
+echo
+printf '  <1 KiB  : ' 
+printf_new "$second"
+echo
+printf '  <10 KiB : ' 
+printf_new "$third"
+echo
+printf '  <100 KiB: ' 
+printf_new "$fourth"
+echo
+printf '  <1 MiB  : ' 
+printf_new "$fifth"
+echo
+printf '  <10 MiB : ' 
+printf_new "$sixth"
+echo
+printf '  <100 MiB: ' 
+printf_new "$seventh"
+echo
+printf '  <1 GiB  : ' 
+printf_new "$eight"
+echo
+printf '  >=1 GiB : ' 
+printf_new "$ninth"
+echo
